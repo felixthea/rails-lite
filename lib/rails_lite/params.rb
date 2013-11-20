@@ -19,27 +19,32 @@ class Params
 
   def parse_www_encoded_form(www_encoded_form)
     return nil if www_encoded_form.nil?
+    params = {}
+    key_values = URI::decode_www_form(www_encoded_form)
+    # key_values => [["cat[name]", "Breakfast"], ["cat[owner]", "Devon"]]
+    key_values.each do |full_key, value|
+      scope = @params
 
-    URI::decode_www_form(www_encoded_form).each do |pair|
-      # first_pair = ["cat[name]", "Breakfast"]
-      parse_key(pair.first).last = pair.last
-  end
+      key_seq = parse_key(full_key)
+      key_seq.each_with_index do |key, idx|
+        if (idx + 1) == key_seq.count
+          scope[key] = value
+        else
+          scope[key] ||= {}
+          scope = scope[key]
+        end
+      end
+    end
 
-
-  # arr = ["cat[name]", "Breakfast"]
-  def nested_parse(arr)
-    if parse_key(arr.first).count == 1
-      return parse_key(arr.first)
-    else
-      nested_parse(arr.first) = arr.last
+    params
   end
 
   def parse_key(key)
-    if key.split(/\]\[|\[|\]/)
+    match_data = /(?<head>.*)\[(?<rest>.*)\]/.match(key)
+    if match_data
+      parse_key(match_data["rest"]).unshift(match_data["head"])
+    else
+      [key]
+    end
   end
 end
-
-# URI::decode_www_form(www_encoded_form)
-#  => [["cat[name]", "Breakfast"], ["cat[owner]", "Devon"]]
-# [["cat[name]", "Breakfast"], ["cat[owner]", "Devon"]]
-# "cat[name]".split(/\]\[|\[|\]/) => ["cat", "name"]

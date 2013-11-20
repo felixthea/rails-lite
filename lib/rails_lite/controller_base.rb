@@ -6,7 +6,7 @@ require 'active_support/core_ext'
 class ControllerBase
   attr_reader :params
 
-  def initialize(req, res, route_params = nil)
+  def initialize(req, res, route_params = {})
     @req = req
     @res = res
     @route_params = route_params
@@ -45,6 +45,7 @@ class ControllerBase
     render_content(content,"text/html")
   end
 
-  def invoke_action(name)
+  def invoke_action(action_name)
+    self.send(action_name)
   end
 end
